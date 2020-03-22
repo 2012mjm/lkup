@@ -1,3 +1,4 @@
 telethon
 mysql-connector-python
-Flask
+pysocks
+quart
