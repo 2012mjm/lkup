@@ -108,7 +108,7 @@ class Crawler:
                 result = await self.client.send_code_request(phone)
                 return 'send_code', result.phone_code_hash
             except FloodWaitError as err:
-                afterDate = datetime.now() + timedelta(seconds=err.second)
+                afterDate = datetime.now() + timedelta(seconds=err.seconds)
                 return 'floodWaitError', afterDate.strftime("%Y-%m-%d %H:%M:%S")
                 # return 'floodWaitError', None
             except Exception as err:

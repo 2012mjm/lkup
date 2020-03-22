@@ -8,10 +8,12 @@ CREATE TABLE IF NOT EXISTS `session` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `phone` VARCHAR(45) CHARACTER SET 'utf8mb4' NOT NULL,
   `blockDate` DATETIME NULL DEFAULT NULL,
-  PRIMARY KEY (`id`))
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `phone` (`phone`)
+)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
-
 
 -- -----------------------------------------------------
 -- Table `user`
@@ -170,16 +172,24 @@ CREATE TABLE IF NOT EXISTS `setting` (
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
-
 INSERT INTO `setting` (`id`, `title`, `key`, `value`) VALUES
-  (NULL, 'شناسه بات', 'bot_username', 'likerup_bot'),
-  (NULL, 'توکن بات', 'bot_token', '197241593:AAHrOLMYd_pays4G7gBotrWJ74bkqex2NuY'),
-  (NULL, 'آی دی کانال', 'channel_username', ''),
+  (NULL, 'شناسه بات', 'bot_username', 'likesup_bot'),
+  (NULL, 'توکن بات', 'bot_token', '590356167:AAFGI8Oj8K6brBtbwVik9bhMzWWHgJ1K890'),
+  (NULL, 'آی دی کانال', 'channel_username', '...'),
   (NULL, 'آی دی مدیر', 'manager_telegram_id', '114463063'),
-  (NULL, 'مرچنت زرین پال', 'zarinpal_merchant_id', '000'),
+  (NULL, 'مرچنت زرین پال', 'zarinpal_merchant_id', '9a58e0b4-a11f-11e7-969d-000c295eb8fc'),
   (NULL, 'وضعیت سندباکس زرین پال', 'zarinpal_sandbox', '0'),
-  (NULL, 'آدرس بازگشتی درگاه پرداخت', 'callback_payment_url', 'http://localhost:1338/zarinpal-verify'),
-  (NULL, 'ایمیل مدیر', 'admin_email', 'info@test.com');
+  (NULL, 'آدرس بازگشتی درگاه پرداخت', 'callback_payment_url', 'http://127.0.0.1:5834/zarinpal-verify'),
+  (NULL, 'ایمیل مدیر', 'admin_email', 'info@127.0.0.1'),
+  (NULL, 'آدرس وب سرویس تلگرام', 'tg_api_url', 'http://127.0.0.1:5833'),
+  (NULL, 'آدرس وب سرویس احراز هویت تلگرام', 'tg_api_auth_url', 'http://127.0.0.1:5833'),
+  (NULL, '۵ لایک رایگان', 'price_like_5', '0'),
+  (NULL, '۱۰ لایک', 'price_like_30', '3000'),
+  (NULL, '۱۲۰ لایک', 'price_like_120', '8500'),
+  (NULL, '۵۰ لایک', 'price_like_50', '4000'),
+  (NULL, '۱ لایک تست درگاه پرداخت', 'price_like_1', '100'),
+  (NULL, '۵۰۰ لایک رایگان مدیر', 'price_like_500', '0'),
+  (NULL, '۱۰۰ لایک', 'price_like_100', '7500');
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

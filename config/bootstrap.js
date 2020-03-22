@@ -9,29 +9,42 @@
  * http://sailsjs.org/#!/documentation/reference/sails.config/sails.config.bootstrap.html
  */
 
-const TelegramBot = require('node-telegram-bot-api');
-
 module.exports.bootstrap = function(cb) {
+  SettingService.getAll().then(
+    rows => {
+      rows.map(row => {
+        sails.config.params[row.key] = row.value;
+      });
 
-  SettingService.getAll().then((rows) => {
-    rows.map((row) => {
-      sails.config.params[row.key] = row.value
-    });
+      sails.tgBot = new TelegramBotService(sails.config.params.bot_token, true);
 
-    sails.tgBot = new TelegramBot(sails.config.params.bot_token, { polling: true });
+      sails.tgBot.bot.on("message", async ctx => {
+        try {
+          sails.tgBot.setContext(ctx);
 
-    sails.tgBot.on('message', msg => {
-      TelegramBotService.messageEvent(msg)
-    })
-    sails.tgBot.on('callback_query', callbackQuery => {
-      TelegramBotService.callbackQueryEvent(callbackQuery)
-    })
-    sails.tgBot.on('inline_query', inlineQuery => {
-      TelegramBotService.inlineQueryEvent(inlineQuery)
-    })
+          sails.tgBot.messageEvent();
+        } catch (e) {
+          console.log("telegram bot", e);
+        }
+      });
 
-    cb();
-  }, (err) => {
-    cb();
-  });
+      sails.tgBot.bot.launch();
+
+      // sails.tgBot.on("message", msg => {
+      //   console.log("msg", msg);
+      //   TelegramBotService.messageEvent(msg);
+      // });
+      // sails.tgBot.on("callback_query", callbackQuery => {
+      //   TelegramBotService.callbackQueryEvent(callbackQuery);
+      // });
+      // sails.tgBot.on("inline_query", inlineQuery => {
+      //   TelegramBotService.inlineQueryEvent(inlineQuery);
+      // });
+
+      cb();
+    },
+    err => {
+      cb();
+    }
+  );
 };
