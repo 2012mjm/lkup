@@ -25,6 +25,63 @@ let self = (module.exports = {
     });
   },
 
+  getList: (page = 1, limit = 10) => {
+    return new Promise((resolve, reject) => {
+      const query = "SELECT * FROM `session` ORDER BY id DESC";
+
+      Session.query(
+        `${query} LIMIT ? OFFSET ?`,
+        [limit, (page - 1) * limit],
+        (err, rows) => {
+          if (err || rows.length === 0) {
+            return reject(sails.__("Session not found"));
+          }
+
+          Session.query(
+            `SELECT COUNT(*) AS count FROM (${query}) c`,
+            [],
+            (err, rowsCount) => {
+              if (err || rowsCount.length === 0)
+                return reject(sails.__("Channel not found"));
+              resolve({ rows: rows, count: rowsCount[0].count });
+            }
+          );
+        }
+      );
+    });
+  },
+
+  tgGetList: (page = 1, limit = 10) => {
+    return new Promise((resolve, reject) => {
+      self.getList(page, limit).then(
+        data => {
+          const textList = data.rows.map(
+            session =>
+              `#${session.id} - ${session.phone}\n${
+                session.gender === "male" ? "👨🏻" : "👩🏻"
+              } ${session.firstname} ${session.lastname}`
+          );
+
+          let options = {};
+          const inlineKeyboard = TextHelper.paginationInlineKeyboard(
+            data.count,
+            limit,
+            "session_page_",
+            page
+          );
+          if (inlineKeyboard !== null) {
+            options.reply_markup = { inline_keyboard: inlineKeyboard };
+          }
+
+          return resolve({ text: textList.join("\n\n"), options: options });
+        },
+        err => {
+          return reject({ text: err });
+        }
+      );
+    });
+  },
+
   insert: (phone, firstname, lastname, gender) => {
     return new Promise((resolve, reject) => {
       Session.create({

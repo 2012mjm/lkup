@@ -37,6 +37,21 @@ class BotService {
     this.session = ctx.session;
   }
 
+  setContextCallbackQuery(ctx) {
+    const callbackQuery = ctx.update.callback_query;
+
+    this.answerCbQuery = ctx.answerCbQuery;
+    this.editMessageText = ctx.editMessageText;
+    this.reply = ctx.reply;
+    this.data = callbackQuery.data;
+    this.from = callbackQuery.from;
+    this.text =
+      callbackQuery.message && callbackQuery.message.text
+        ? callbackQuery.message.text
+        : null;
+    this.session = ctx.session;
+  }
+
   messageEvent() {
     UserService.tgFindAndCreate(this.from).then(user => {
       // start command
@@ -66,6 +81,15 @@ class BotService {
         //   "پست خودت رو برای من فوروارد کن تا لایک هاشو واست بالا ببرم 😍"
         // );
         this.reply("به زودی");
+      } else if (user.isAdmin && this.text === sails.__("Session list")) {
+        SessionService.tgGetList().then(
+          res => {
+            this.reply(res.text, res.options);
+          },
+          err => {
+            this.reply(err.text);
+          }
+        );
       } else if (
         user.isAdmin &&
         user.tgState === "add_new_number" &&
@@ -195,154 +219,152 @@ class BotService {
     });
   }
 
-  callbackQueryEvent(callbackQuery) {
-    const data = callbackQuery.data;
-    const from = callbackQuery.from;
-    const messageId =
-      callbackQuery.message !== undefined
-        ? callbackQuery.message.message_id
-        : null;
-    const chatId =
-      callbackQuery.message !== undefined
-        ? callbackQuery.message.chat.id
-        : null;
-    const callId = callbackQuery.id;
+  callbackQueryEvent() {
+    UserService.tgFindAndCreate(this.from).then(user => {
+      const match = this.data.match(/^session_page_(\d+)$/i);
+      if (user.isAdmin && match) {
+        const page = parseInt(match[1]);
 
-    UserService.tgFindAndCreate(from).then(user => {
-      if (user.tgState === "get_message" && user.tgStateParams !== null) {
-        UserService.tgUpdateState(user, "get_button");
-
-        MessageService.update(JSON.parse(user.tgStateParams).message_id, {
-          button: data
-        }).then(message => {
-          SessionService.getNotUse(message.id, 10000).then(
-            sessions => {
-              let inlineKeyboard = [];
-              const countLikeList = [5, 30, 50, 100, 120];
-              if (user.isAdmin) {
-                countLikeList.push(10000);
-                // countLikeList.push(1)
-              }
-              countLikeList.forEach(countLike => {
-                if (sessions.length >= countLike) {
-                  let price = sails.config.params[`price_like_${countLike}`];
-                  inlineKeyboard.push([
-                    {
-                      callback_data: countLike,
-                      text:
-                        countLike +
-                        " لایک - " +
-                        (price > 0 ? price + " تومان 💰" : "رایگان 😍")
-                    }
-                  ]);
-                } else if (user.isAdmin) {
-                  let price = sails.config.params[`price_like_${countLike}`];
-                  inlineKeyboard.push([
-                    {
-                      callback_data: countLike,
-                      text:
-                        (countLike === 10000 ? "نامحدود" : countLike) +
-                        " لایک - " +
-                        (price > 0 ? price + " تومان 💰" : "رایگان 😍")
-                    }
-                  ]);
-                }
-              });
-
-              if (inlineKeyboard.length === 0) {
-                UserService.tgUpdateState(user, "start", null);
-                sails.tgBot.editMessageText(
-                  "بیشتر از این نمیتونم پستت رو لایک کنم 😞\nاگه پست دیگه ای داری واسم فوروارد کن تا لایک‌هاشو واست بالا ببرم 😉",
-                  {
-                    message_id: messageId,
-                    chat_id: chatId
-                  }
-                );
-              } else {
-                sails.tgBot.editMessageText("چند تا لایک میخوایی؟ 😎", {
-                  message_id: messageId,
-                  chat_id: chatId,
-                  reply_markup: { inline_keyboard: inlineKeyboard }
-                });
-              }
-            },
-            err => {
-              UserService.tgUpdateState(user, "start", null);
-              sails.tgBot.editMessageText(
-                "بیشتر از این نمیتونم پستت رو لایک کنم 😞\nاگه پست دیگه ای داری واسم فوروارد کن تا لایک‌هاشو واست بالا ببرم 😉",
-                {
-                  message_id: messageId,
-                  chat_id: chatId
-                }
-              );
-            }
-          );
+        SessionService.tgGetList(page).then(res => {
+          this.editMessageText(res.text, res.options);
+          this.answerCbQuery();
         });
-        sails.tgBot.answerCallbackQuery({ callback_query_id: callId });
-      } else if (user.tgState === "get_button" && user.tgStateParams !== null) {
-        const countLike = parseInt(data);
-        const price = sails.config.params[`price_like_${data}`];
-        MessageService.findById(JSON.parse(user.tgStateParams).message_id).then(
-          message => {
-            OrderService.insertByUserId(user.id, {
-              messageId: message.id,
-              countLike: countLike,
-              type: price > 0 ? "coin" : "join"
-            }).then(order => {
-              UserService.tgUpdateState(user, "start", null);
-
-              if (price > 0) {
-                PaymentService.zarinpalRequest(user, price).then(zarinpal => {
-                  OrderService.update(order.id, {
-                    paymentId: zarinpal.payment.id
-                  }).then();
-                  sails.tgBot.editMessageText(
-                    "روی دکمه شیشه‌ای زیر کلیک کن تا به درگاه پرداخت آنلاین منتقلت کنم 🙂",
-                    {
-                      message_id: messageId,
-                      chat_id: chatId,
-                      reply_markup: {
-                        inline_keyboard: [
-                          [
-                            {
-                              text: "پرداخت مبلغ " + price + " تومان",
-                              url: zarinpal.url
-                            }
-                          ]
-                        ]
-                      }
-                    }
-                  );
-                });
-              } else {
-                OrderService.isUseFree(user).then(
-                  res => {
-                    this.reply(
-                      "شرمنده شما یکبار از سرویس رایگان من استفاده کردید. 😯"
-                    );
-                  },
-                  err => {
-                    OrderService.update(order.id, { status: "working" }).then();
-                    MessageService.addLike(order).then(res => {
-                      this.reply(
-                        "به تعدادی که خواستی پستت رو لایک کردم 😍\nاگه نظری یا پیشنهادی داری با سازنده من تماس بگیر @javad010"
-                      );
-                    });
-                    // sails.tgBot.editMessageText(
-                    //   "الان شروع میکنم به لایک پستت، تموم که شد خودم همینجا بهت پیام میدم\nاگه پست دیگه‌ای هم داری واسم فوروارد کن",
-                    //   {
-                    //     message_id: messageId,
-                    //     chat_id: chatId
-                    //   }
-                    // );
-                  }
-                );
-              }
-              sails.tgBot.answerCallbackQuery({ callback_query_id: callId });
-            });
-          }
-        );
       }
+
+      // if (user.tgState === "get_message" && user.tgStateParams !== null) {
+      //   UserService.tgUpdateState(user, "get_button");
+
+      //   MessageService.update(JSON.parse(user.tgStateParams).message_id, {
+      //     button: data
+      //   }).then(message => {
+      //     SessionService.getNotUse(message.id, 10000).then(
+      //       sessions => {
+      //         let inlineKeyboard = [];
+      //         const countLikeList = [5, 30, 50, 100, 120];
+      //         if (user.isAdmin) {
+      //           countLikeList.push(10000);
+      //           // countLikeList.push(1)
+      //         }
+      //         countLikeList.forEach(countLike => {
+      //           if (sessions.length >= countLike) {
+      //             let price = sails.config.params[`price_like_${countLike}`];
+      //             inlineKeyboard.push([
+      //               {
+      //                 callback_data: countLike,
+      //                 text:
+      //                   countLike +
+      //                   " لایک - " +
+      //                   (price > 0 ? price + " تومان 💰" : "رایگان 😍")
+      //               }
+      //             ]);
+      //           } else if (user.isAdmin) {
+      //             let price = sails.config.params[`price_like_${countLike}`];
+      //             inlineKeyboard.push([
+      //               {
+      //                 callback_data: countLike,
+      //                 text:
+      //                   (countLike === 10000 ? "نامحدود" : countLike) +
+      //                   " لایک - " +
+      //                   (price > 0 ? price + " تومان 💰" : "رایگان 😍")
+      //               }
+      //             ]);
+      //           }
+      //         });
+
+      //         if (inlineKeyboard.length === 0) {
+      //           UserService.tgUpdateState(user, "start", null);
+      //           sails.tgBot.editMessageText(
+      //             "بیشتر از این نمیتونم پستت رو لایک کنم 😞\nاگه پست دیگه ای داری واسم فوروارد کن تا لایک‌هاشو واست بالا ببرم 😉",
+      //             {
+      //               message_id: messageId,
+      //               chat_id: chatId
+      //             }
+      //           );
+      //         } else {
+      //           sails.tgBot.editMessageText("چند تا لایک میخوایی؟ 😎", {
+      //             message_id: messageId,
+      //             chat_id: chatId,
+      //             reply_markup: { inline_keyboard: inlineKeyboard }
+      //           });
+      //         }
+      //       },
+      //       err => {
+      //         UserService.tgUpdateState(user, "start", null);
+      //         sails.tgBot.editMessageText(
+      //           "بیشتر از این نمیتونم پستت رو لایک کنم 😞\nاگه پست دیگه ای داری واسم فوروارد کن تا لایک‌هاشو واست بالا ببرم 😉",
+      //           {
+      //             message_id: messageId,
+      //             chat_id: chatId
+      //           }
+      //         );
+      //       }
+      //     );
+      //   });
+      //   sails.tgBot.answerCallbackQuery({ callback_query_id: callId });
+      // } else if (user.tgState === "get_button" && user.tgStateParams !== null) {
+      //   const countLike = parseInt(data);
+      //   const price = sails.config.params[`price_like_${data}`];
+      //   MessageService.findById(JSON.parse(user.tgStateParams).message_id).then(
+      //     message => {
+      //       OrderService.insertByUserId(user.id, {
+      //         messageId: message.id,
+      //         countLike: countLike,
+      //         type: price > 0 ? "coin" : "join"
+      //       }).then(order => {
+      //         UserService.tgUpdateState(user, "start", null);
+
+      //         if (price > 0) {
+      //           PaymentService.zarinpalRequest(user, price).then(zarinpal => {
+      //             OrderService.update(order.id, {
+      //               paymentId: zarinpal.payment.id
+      //             }).then();
+      //             sails.tgBot.editMessageText(
+      //               "روی دکمه شیشه‌ای زیر کلیک کن تا به درگاه پرداخت آنلاین منتقلت کنم 🙂",
+      //               {
+      //                 message_id: messageId,
+      //                 chat_id: chatId,
+      //                 reply_markup: {
+      //                   inline_keyboard: [
+      //                     [
+      //                       {
+      //                         text: "پرداخت مبلغ " + price + " تومان",
+      //                         url: zarinpal.url
+      //                       }
+      //                     ]
+      //                   ]
+      //                 }
+      //               }
+      //             );
+      //           });
+      //         } else {
+      //           OrderService.isUseFree(user).then(
+      //             res => {
+      //               this.reply(
+      //                 "شرمنده شما یکبار از سرویس رایگان من استفاده کردید. 😯"
+      //               );
+      //             },
+      //             err => {
+      //               OrderService.update(order.id, { status: "working" }).then();
+      //               MessageService.addLike(order).then(res => {
+      //                 this.reply(
+      //                   "به تعدادی که خواستی پستت رو لایک کردم 😍\nاگه نظری یا پیشنهادی داری با سازنده من تماس بگیر @javad010"
+      //                 );
+      //               });
+      //               // sails.tgBot.editMessageText(
+      //               //   "الان شروع میکنم به لایک پستت، تموم که شد خودم همینجا بهت پیام میدم\nاگه پست دیگه‌ای هم داری واسم فوروارد کن",
+      //               //   {
+      //               //     message_id: messageId,
+      //               //     chat_id: chatId
+      //               //   }
+      //               // );
+      //             }
+      //           );
+      //         }
+      //         sails.tgBot.answerCallbackQuery({ callback_query_id: callId });
+      //       });
+      //    }
+      //  );
+      // }
     });
   }
 
@@ -364,7 +386,7 @@ class BotService {
                 text: sails.__("Add new number")
               },
               {
-                text: sails.__("Increase like")
+                text: sails.__("Session list")
               }
             ]
           ]

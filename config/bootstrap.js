@@ -28,6 +28,16 @@ module.exports.bootstrap = function(cb) {
         }
       });
 
+      sails.tgBot.bot.on("callback_query", async ctx => {
+        try {
+          sails.tgBot.setContextCallbackQuery(ctx);
+
+          sails.tgBot.callbackQueryEvent();
+        } catch (e) {
+          console.log("telegram bot", e);
+        }
+      });
+
       sails.tgBot.bot.launch();
 
       // sails.tgBot.on("message", msg => {
