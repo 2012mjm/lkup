@@ -1,4 +1,6 @@
 const TextHelper = require("../../helper/TextHelper");
+const boys = require("../../helper/boys");
+const girls = require("../../helper/girls");
 const jMoment = require("jalali-moment");
 jMoment.loadPersian();
 

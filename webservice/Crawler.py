@@ -151,10 +151,11 @@ class Crawler:
 
             try:
                 photoPath = await self.downloadImageFromUrl(photo)
+                print('photoPath', photoPath);
                 await self.client(UploadProfilePhotoRequest(
                     file=self.client.upload_file(photoPath)
                 ))
-                await self.removeImage(photoPath)
+                # await self.removeImage(photoPath)
             except Exception as err:
                 print(err)
                 return 'exception', None
