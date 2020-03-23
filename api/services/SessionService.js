@@ -1,6 +1,7 @@
 const TextHelper = require("../../helper/TextHelper");
 const boys = require("../../helper/boys");
 const girls = require("../../helper/girls");
+const bios = require("../../helper/bios");
 const jMoment = require("jalali-moment");
 jMoment.loadPersian();
 
@@ -93,6 +94,9 @@ let self = (module.exports = {
     return new Promise((resolve, reject) => {
       const { firstname, lastname, gender } = TextHelper.nameGenerator();
 
+      const bioIndex = Math.floor(Math.random() * bios.length);
+      bio = bios[bioIndex];
+
       let photo;
       if (gender === "male") {
         const index = Math.floor(Math.random() * boys.length);
@@ -108,6 +112,7 @@ let self = (module.exports = {
         hash,
         firstname,
         lastname,
+        bio,
         photo
       ).then(
         res => {

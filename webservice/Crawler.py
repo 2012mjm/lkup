@@ -127,7 +127,7 @@ class Crawler:
 
         return 'already_login', await self.client.get_me()
 
-    async def authorized_verify(self, phone=None, code=None, hash=None, firstname=None, lastname=None, photo=None):
+    async def authorized_verify(self, phone=None, code=None, hash=None, firstname=None, lastname=None, bio=None, photo=None):
         if self.client is None:
             return 'client_none', None
         if not await self.client.is_user_authorized():
@@ -148,7 +148,7 @@ class Crawler:
                 await self.client(UpdateProfileRequest(
                     first_name=firstname,
                     last_name=lastname,
-                    about=''
+                    about=bio
                 ))
             except Exception as err:
                 print(err)

@@ -167,14 +167,15 @@ async def verify():
     hash = (await request.form).get('hash')
     firstname = (await request.form).get('firstname')
     lastname = (await request.form).get('lastname')
+    bio = (await request.form).get('bio')
     photo = (await request.form).get('photo')
 
-    print(phone, code, hash, firstname, lastname, photo)
+    print(phone, code, hash, firstname, lastname, bio, photo)
 
     crawler = Crawler()
     await crawler.connect('session/' + phone)
 
-    status, result = await crawler.authorized_verify(phone, code, hash, firstname, lastname, photo)
+    status, result = await crawler.authorized_verify(phone, code, hash, firstname, lastname, bio, photo)
     await crawler.disconnect()
 
     print(status)
