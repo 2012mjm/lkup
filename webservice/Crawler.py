@@ -1,10 +1,10 @@
 import os
 import hashlib
 import json
-from datetime import datetime, timedelta
 import socks
 import urllib.request
 import random
+from datetime import datetime, timedelta
 
 # from IPython import embed
 
@@ -19,7 +19,12 @@ from telethon.tl.functions.photos import UploadProfilePhotoRequest
 
 from telethon.errors import FloodWaitError, \
     SessionPasswordNeededError, \
-    PhoneNumberUnoccupiedError
+    PhoneNumberUnoccupiedError, \
+    FilePartsInvalidError,\
+    ImageProcessFailedError,\
+    PhotoCropSizeSmallError,\
+    PhotoExtInvalidError
+
 from telethon.tl.types import InputChannel, \
     InputPeerChannel, \
     Message, \
@@ -151,11 +156,25 @@ class Crawler:
 
             try:
                 photoPath = await self.downloadImageFromUrl(photo)
-                print('photoPath', photoPath);
+                print('photoPath', photoPath)
+
+                uploadPhoto = await self.client.upload_file(photoPath)
                 await self.client(UploadProfilePhotoRequest(
-                    file=self.client.upload_file(photoPath)
+                    file=uploadPhoto
                 ))
                 # await self.removeImage(photoPath)
+            except FilePartsInvalidError as err:
+                print('FilePartsInvalidError')
+                return 'FilePartsInvalidError', None
+            except ImageProcessFailedError as err:
+                print('ImageProcessFailedError')
+                return 'ImageProcessFailedError', None
+            except PhotoCropSizeSmallError as err:
+                print('PhotoCropSizeSmallError')
+                return 'PhotoCropSizeSmallError', None
+            except PhotoExtInvalidError as err:
+                print('PhotoExtInvalidError')
+                return 'PhotoExtInvalidError', None
             except Exception as err:
                 print(err)
                 return 'exception', None
@@ -165,7 +184,7 @@ class Crawler:
 
     async def downloadImageFromUrl(self, url):
         name = random.randrange(1000000, 9999999)
-        fullname = "photos/"+str(name)+".jpg"
+        fullname = os.getcwd()+"/photos/"+str(name)+".jpg"
 
         urllib.request.urlretrieve(
             url, fullname)

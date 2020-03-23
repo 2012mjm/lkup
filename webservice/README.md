@@ -24,3 +24,9 @@ iptables -A INPUT -m state --state NEW -p tcp --dport 5835 -j ACCEPT
 
 sudo apt install python3-pip
 pip3 install requirements
+
+# run in background
+
+nohup python3 ~mjm3d/likeup_bot/webservice/api.py > output.log &
+ps ax | grep api.py
+kill PID
