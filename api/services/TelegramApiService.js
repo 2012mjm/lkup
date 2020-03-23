@@ -80,7 +80,7 @@ let self = (module.exports = {
     });
   },
 
-  verifyCode: (phone, code, hash) => {
+  verifyCode: (phone, code, hash, firstname, lastname, photo) => {
     return new Promise((resolve, reject) => {
       rp({
         method: "POST",
@@ -88,7 +88,10 @@ let self = (module.exports = {
         formData: {
           phone,
           code,
-          hash
+          hash,
+          firstname,
+          lastname,
+          photo
         },
         json: true
       })

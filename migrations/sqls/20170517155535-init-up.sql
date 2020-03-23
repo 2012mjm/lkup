@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS `session` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `phone` VARCHAR(45) CHARACTER SET 'utf8mb4' NOT NULL,
   `blockDate` DATETIME NULL DEFAULT NULL,
+  `firstname` VARCHAR(45) NULL,
+  `lastname` VARCHAR(45) NULL,
+  `gender` VARCHAR(20) NULL,
+  `blockJoinChannel` TINYINT(1) NOT NULL DEFAULT '0',
   `active` tinyint(1) NOT NULL DEFAULT '1',
    PRIMARY KEY (`id`),
    UNIQUE KEY `phone` (`phone`)

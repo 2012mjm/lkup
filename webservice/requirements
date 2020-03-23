@@ -2,3 +2,4 @@ telethon
 mysql-connector-python
 pysocks
 quart
+urllib3

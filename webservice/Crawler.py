@@ -3,14 +3,20 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 import socks
+import urllib.request
+import random
 
 # from IPython import embed
 
 from telethon import TelegramClient
+
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.functions.contacts import ResolveUsernameRequest
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.upload import GetFileRequest
+from telethon.tl.functions.account import UpdateProfileRequest
+from telethon.tl.functions.photos import UploadProfilePhotoRequest
+
 from telethon.errors import FloodWaitError, \
     SessionPasswordNeededError, \
     PhoneNumberUnoccupiedError
@@ -116,23 +122,56 @@ class Crawler:
 
         return 'already_login', await self.client.get_me()
 
-    async def authorized_verify(self, phone=None, code=None, hash=None):
+    async def authorized_verify(self, phone=None, code=None, hash=None, firstname=None, lastname=None, photo=None):
         if self.client is None:
             return 'client_none', None
         if not await self.client.is_user_authorized():
             try:
-                me = await self.client.sign_in(phone, code, phone_code_hash=hash)
+                await self.client.sign_in(phone, code, phone_code_hash=hash)
             except PhoneNumberUnoccupiedError as err:
-                me = await self.client.sign_up(code, 'ali')
+                await self.client.sign_up(code, firstname)
             # except SessionPasswordNeeded as err:
             #     return 'password_needed', None
             except FloodWaitError as err:
                 afterDate = datetime.now() + timedelta(seconds=err.seconds)
                 return 'floodWaitError', afterDate.strftime("%Y-%m-%d %H:%M:%S")
             except Exception as err:
+                print(err)
                 return 'exception', None
-            return 'ok', me
+
+            try:
+                await self.client(UpdateProfileRequest(
+                    first_name=firstname,
+                    last_name=lastname,
+                    about=''
+                ))
+            except Exception as err:
+                print(err)
+                return 'exception', None
+
+            try:
+                photoPath = await self.downloadImageFromUrl(photo)
+                await self.client(UploadProfilePhotoRequest(
+                    file=self.client.upload_file(photoPath)
+                ))
+                await self.removeImage(photoPath)
+            except Exception as err:
+                print(err)
+                return 'exception', None
+
+            return 'ok', await self.client.get_me()
         return 'already_login', None
+
+    async def downloadImageFromUrl(self, url):
+        name = random.randrange(1000000, 9999999)
+        fullname = "photos/"+str(name)+".jpg"
+
+        urllib.request.urlretrieve(
+            url, fullname)
+        return fullname
+
+    async def removeImage(self, path):
+        return os.remove(path)
 
     def isAuthorized(self, phone=None):
         if self.client is None:

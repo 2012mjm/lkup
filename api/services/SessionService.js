@@ -1,6 +1,4 @@
 const TextHelper = require("../../helper/TextHelper");
-const moment = require("moment");
-const persianJs = require("persianjs");
 const jMoment = require("jalali-moment");
 jMoment.loadPersian();
 
@@ -24,10 +22,14 @@ let self = (module.exports = {
     });
   },
 
-  insert: phone => {
+  insert: (phone, firstname, lastname, gender) => {
     return new Promise((resolve, reject) => {
       Session.create({
-        phone: phone,
+        phone,
+        firstname,
+        lastname,
+        gender,
+        blockJoinChannel: "0",
         active: "1"
       }).exec((err, row) => {
         if (err) {
@@ -87,10 +89,28 @@ let self = (module.exports = {
 
   verifyNewNumber: (phone, code, hash) => {
     return new Promise((resolve, reject) => {
-      TelegramApiService.verifyCode(phone, code, hash).then(
+      const { firstname, lastname, gender } = TextHelper.nameGenerator();
+
+      let photo;
+      if (gender === "male") {
+        const index = Math.floor(Math.random() * boys.length);
+        photo = boys[index];
+      } else {
+        const index = Math.floor(Math.random() * girls.length);
+        photo = girls[index];
+      }
+
+      TelegramApiService.verifyCode(
+        phone,
+        code,
+        hash,
+        firstname,
+        lastname,
+        photo
+      ).then(
         res => {
           if (res.status === "ok") {
-            self.insert(phone).then(
+            self.insert(phone, firstname, lastname, gender).then(
               res => {
                 return resolve("شماره مورد نظر با موفقیت افزوده شد.");
               },
