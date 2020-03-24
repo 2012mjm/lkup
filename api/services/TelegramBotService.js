@@ -25,7 +25,7 @@ class BotService {
 
   // useAccess({ from, reply }, next) {
   //   if (config.botAdminIds.indexOf(from.id) === -1) {
-  //     return this.reply("Access deny");
+  //     return reply("Access deny");
   //   }
   //   return next();
   // }
@@ -45,85 +45,81 @@ class BotService {
     this.reply = ctx.reply;
     this.data = callbackQuery.data;
     this.from = callbackQuery.from;
-    this.text =
-      callbackQuery.message && callbackQuery.message.text
-        ? callbackQuery.message.text
-        : null;
+    this.text = callbackQuery.message && callbackQuery.message.text
+      ? callbackQuery.message.text
+      : null;
     this.session = ctx.session;
   }
 
-  messageEvent() {
-    UserService.tgFindAndCreate(this.from).then(user => {
+  messageEvent(ctx) {
+    const reply = ctx.reply;
+    const text = ctx.message && ctx.message.text ? ctx.message.text : null;
+    const from = ctx.from;
+    // const session = ctx.session;
+
+    UserService.tgFindAndCreate(from).then(user => {
       // start command
-      if (this.text === "/start" || this.text === sails.__("Back to home")) {
+      if (text === "/start" || text === sails.__("Back to home")) {
         UserService.tgUpdateState(user, "start", null);
 
         if (user.isAdmin) {
-          this.reply(
+          reply(
             "چه کاری میتوانم برای شما انجام بدهم؟",
             this.startKeyboard(user.isAdmin)
           );
         } else {
-          // this.reply(
+          // reply(
           //   "پست خودت رو برای من فوروارد کن تا لایک هاشو واست بالا ببرم 😍"
           // );
-          this.reply("شما دسترسی ندارید");
+          reply("شما دسترسی ندارید");
         }
-      } else if (user.isAdmin && this.text === sails.__("Add new number")) {
+      } else if (user.isAdmin && text === sails.__("Add new number")) {
         UserService.tgUpdateState(user, "add_new_number", null);
 
-        this.reply(
+        reply(
           "شماره موبایل مورد نظر را برای من ارسال کنید\nبرای مثال: 989011231234"
         );
-      } else if (user.isAdmin && this.text === sails.__("Increase like")) {
+      } else if (user.isAdmin && text === sails.__("Increase like")) {
         UserService.tgUpdateState(user, "start", null);
-        // this.reply(
+        // reply(
         //   "پست خودت رو برای من فوروارد کن تا لایک هاشو واست بالا ببرم 😍"
         // );
-        this.reply("به زودی");
-      } else if (user.isAdmin && this.text === sails.__("Session list")) {
+        reply("به زودی");
+      } else if (user.isAdmin && text === sails.__("Session list")) {
         SessionService.tgGetList().then(
           res => {
-            this.reply(res.text, res.options);
+            reply(res.text, res.options);
           },
           err => {
-            this.reply(err.text);
+            reply(err.text);
           }
         );
       } else if (
-        user.isAdmin &&
-        user.tgState === "add_new_number" &&
-        this.text !== null
+        user.isAdmin && user.tgState === "add_new_number" && text !== null
       ) {
-        SessionService.addNewNumber(this.text).then(
+        SessionService.addNewNumber(text).then(
           res => {
             UserService.tgUpdateState(user, "send_code", {
-              phone: this.text,
+              phone: text,
               hash: res.hash
             });
-            this.reply(res.message);
+            reply(res.message);
           },
           err => {
-            this.reply(err);
+            reply(err);
           }
         );
       } else if (
-        user.isAdmin &&
-        user.tgState === "send_code" &&
-        this.text !== null
+        user.isAdmin && user.tgState === "send_code" && text !== null
       ) {
         const params = JSON.parse(user.tgStateParams);
-        SessionService.verifyNewNumber(
-          params.phone,
-          this.text,
-          params.hash
-        ).then(
+        SessionService.verifyNewNumber(params.phone, text, params.hash).then(
           res => {
             UserService.tgUpdateState(user, "start", null);
-            this.reply(res);
+            reply(res);
           },
           err => {
-            this.reply(err);
+            reply(err);
           }
         );
       } else if (
@@ -140,10 +136,9 @@ class BotService {
             UserService.tgUpdateState(user, "get_message", {
               message_id: message.id
             });
-            this.reply(
-              "کدوم یکی از دکمه‌های شیشه‌ای زیر رو واست فشار بدم 😊👇",
-              { reply_markup: message.filterReplyMarkup }
-            );
+            reply("کدوم یکی از دکمه‌های شیشه‌ای زیر رو واست فشار بدم 😊👇", {
+              reply_markup: message.filterReplyMarkup
+            });
           },
           () => {
             TelegramApiService.getMessageFromChannel(
@@ -163,13 +158,13 @@ class BotService {
                     UserService.tgUpdateState(user, "get_message", {
                       message_id: message.id
                     });
-                    this.reply(
+                    reply(
                       "کدوم یکی از دکمه‌های شیشه‌ای زیر رو واست فشار بدم 😊👇",
                       { reply_markup: res.replyMarkup }
                     );
                   },
                   err => {
-                    this.reply("مشکلی پیش اومده!");
+                    reply("مشکلی پیش اومده!");
                   }
                 );
               },
@@ -191,18 +186,18 @@ class BotService {
                         UserService.tgUpdateState(user, "get_message", {
                           message_id: message.id
                         });
-                        this.reply(
+                        reply(
                           "کدوم یکی از دکمه‌های شیشه‌ای زیر رو واست فشار بدم 😊👇",
                           { reply_markup: res.replyMarkup }
                         );
                       },
                       err => {
-                        this.reply("مشکلی پیش اومده!");
+                        reply("مشکلی پیش اومده!");
                       }
                     );
                   },
                   err => {
-                    this.reply(
+                    reply(
                       "پستی که فوروارد کردی مشکل داره، یکبار دیگه فوروارد کن"
                     );
                   }
@@ -211,23 +206,34 @@ class BotService {
             );
           }
         );
-      }
-      // what !! I do not understand
-      else {
-        this.reply(sails.__("I do not understand"));
+      } else {
+        // what !! I do not understand
+        reply(sails.__("I do not understand"));
       }
     });
   }
 
   callbackQueryEvent() {
-    UserService.tgFindAndCreate(this.from).then(user => {
-      const match = this.data.match(/^session_page_(\d+)$/i);
+    const callbackQuery = ctx.update.callback_query;
+
+    const answerCbQuery = ctx.answerCbQuery;
+    const editMessageText = ctx.editMessageText;
+    const data = callbackQuery.data;
+    const from = callbackQuery.from;
+    const reply = ctx.reply;
+    const text = callbackQuery.message && callbackQuery.message.text
+      ? callbackQuery.message.text
+      : null;
+    // const session = ctx.session;
+
+    UserService.tgFindAndCreate(from).then(user => {
+      const match = data.match(/^session_page_(\d+)$/i);
       if (user.isAdmin && match) {
         const page = parseInt(match[1]);
 
         SessionService.tgGetList(page).then(res => {
-          this.editMessageText(res.text, res.options);
-          this.answerCbQuery();
+          editMessageText(res.text, res.options);
+          answerCbQuery();
         });
       }
 
@@ -339,14 +345,14 @@ class BotService {
       //         } else {
       //           OrderService.isUseFree(user).then(
       //             res => {
-      //               this.reply(
+      //               reply(
       //                 "شرمنده شما یکبار از سرویس رایگان من استفاده کردید. 😯"
       //               );
       //             },
       //             err => {
       //               OrderService.update(order.id, { status: "working" }).then();
       //               MessageService.addLike(order).then(res => {
-      //                 this.reply(
+      //                 reply(
       //                   "به تعدادی که خواستی پستت رو لایک کردم 😍\nاگه نظری یا پیشنهادی داری با سازنده من تماس بگیر @javad010"
       //                 );
       //               });

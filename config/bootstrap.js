@@ -20,9 +20,9 @@ module.exports.bootstrap = function(cb) {
 
       sails.tgBot.bot.on("message", async ctx => {
         try {
-          sails.tgBot.setContext(ctx);
+          // sails.tgBot.setContext(ctx);
 
-          sails.tgBot.messageEvent();
+          sails.tgBot.messageEvent(ctx);
         } catch (e) {
           console.log("telegram bot", e);
         }
@@ -30,9 +30,9 @@ module.exports.bootstrap = function(cb) {
 
       sails.tgBot.bot.on("callback_query", async ctx => {
         try {
-          sails.tgBot.setContextCallbackQuery(ctx);
+          // sails.tgBot.setContextCallbackQuery(ctx);
 
-          sails.tgBot.callbackQueryEvent();
+          sails.tgBot.callbackQueryEvent(ctx);
         } catch (e) {
           console.log("telegram bot", e);
         }
