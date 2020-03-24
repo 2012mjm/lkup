@@ -38,8 +38,8 @@ let self = (module.exports = {
             TelegramApiService.joinToChannel(
               session.phone,
               order.channelUsername
-            ).then(
-              res => {
+            )
+              .then(res => {
                 c++;
                 self
                   .insertByUserId(order.userId, {
@@ -53,8 +53,8 @@ let self = (module.exports = {
                   OrderService.update(order.id, { status: "done" }).then();
                   return resolve();
                 }
-              },
-              err => {
+              })
+              .catch(err => {
                 if (err.status === "ChannelsTooMuchError") {
                   SessionService.update(session.id, { blockJoinChannel: "1" });
                 } else if (
@@ -72,8 +72,7 @@ let self = (module.exports = {
                     status: false
                   })
                   .then();
-              }
-            );
+              });
           });
         })
         .catch(() => reject(sails.__("Problem, try again")));

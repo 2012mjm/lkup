@@ -74,7 +74,7 @@ let self = (module.exports = {
       })
         .then(res => {
           if (res.status === "ok") {
-            return resolve(json);
+            return resolve(res);
           }
           return reject(res);
         })
