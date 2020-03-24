@@ -23,7 +23,15 @@ from telethon.errors import FloodWaitError, \
     FilePartsInvalidError,\
     ImageProcessFailedError,\
     PhotoCropSizeSmallError,\
-    PhotoExtInvalidError
+    PhotoExtInvalidError, \
+    AuthRestartError, \
+    InputRequestTooLongError, \
+    PhoneNumberAppSignupForbiddenError, \
+    PhoneNumberBannedError, \
+    PhoneNumberInvalidError, \
+    ApiIdInvalidError, \
+    ApiIdPublishedFloodError
+
 
 from telethon.tl.types import InputChannel, \
     InputPeerChannel, \
@@ -66,22 +74,6 @@ from telethon.tl.types import InputChannel, \
 class Crawler:
     client = None
 
-    # async def __init__(self, storage_name, api_id=78380, api_hash='4e9377bdd268a8303ebb0102fd025cd4'):
-    #     # self.client = TelegramClient(storage_name, api_id, api_hash)
-    #     self.client = TelegramClient(
-    #         storage_name, api_id, api_hash, proxy=(socks.SOCKS5, '127.0.0.1', 1080))
-
-    #     connect = await self.client.connect()
-    #     print('client connect status', connect)
-
-    # try:
-    #     print('client connect status', await self.client.connect())
-    #     return None
-    # except Exception as err:
-    #     print(err)
-    #     self.client = None
-    #     return None
-
     def __del__(self):
         if self.client:
             self.client.disconnect()
@@ -98,17 +90,6 @@ class Crawler:
         if self.client:
             await self.client.disconnect()
 
-    # def authorized(self, phone=None):
-    # 	if self.client is None:
-    # 		return None
-    # 	if not self.client.is_user_authorized():
-    # 		if phone is None:
-    # 			phone = input('Enter the phone: ')
-    # 		self.client.send_code_request(phone)
-    # 		me = self.client.sign_in(phone, input('Enter the code: '))
-    # 		return me
-    # 	return 1
-
     async def authorized_step(self, phone=None):
 
         if self.client is None:
@@ -121,7 +102,20 @@ class Crawler:
             except FloodWaitError as err:
                 afterDate = datetime.now() + timedelta(seconds=err.seconds)
                 return 'floodWaitError', afterDate.strftime("%Y-%m-%d %H:%M:%S")
-                # return 'floodWaitError', None
+            except ApiIdInvalidError as err:
+                return 'ApiIdInvalidError, The api_id/api_hash combination is invalid.', None
+            except ApiIdPublishedFloodError as err:
+                return 'ApiIdPublishedFloodError, This API id was published somewhere, you cant use it now', None
+            except AuthRestartError as err:
+                return 'AuthRestartError: Restart the authorization process', None
+            except InputRequestTooLongError as err:
+                return 'InputRequestTooLongError: The input request was too long. This may be a bug in the library as it can occur when serializing more bytes than it should (like appending the vector constructor code at the end of a message)', None
+            except PhoneNumberAppSignupForbiddenError as err:
+                return 'PhoneNumberAppSignupForbiddenError', None
+            except PhoneNumberBannedError as err:
+                return 'PhoneNumberBannedError, The used phone number has been banned from Telegram and cannot be used anymore. Maybe check https://www.telegram.org/faq_spam', None
+            except PhoneNumberInvalidError as err:
+                return 'PhoneNumberInvalidError, The phone number is invalid', None
             except Exception as err:
                 return 'exception', None
 
