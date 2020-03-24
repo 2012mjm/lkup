@@ -28,7 +28,7 @@ let self = (module.exports = {
   getNotUseJoinChannel: (channelUsername, memberCount) => {
     return new Promise((resolve, reject) => {
       const query =
-        "SELECT id FROM `session` `s` \
+        "SELECT id, phone FROM `session` `s` \
           WHERE NOT EXISTS (SELECT * FROM `channel` `ch` \
             WHERE ch.sessionId = s.id AND ch.channelUsername = ?) \
             AND active = 1 AND blockJoinChannel = 0 \
