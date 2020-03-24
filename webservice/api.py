@@ -187,5 +187,26 @@ async def verify():
         return jsonify({'status': status, 'result': result})
 
 
+@app.route("/channel/join", methods=['POST'])
+async def joinChannel():
+    session = (await request.form).get('session')
+    username = (await request.form).get('username')
+    print(session, username)
+
+    crawler = Crawler()
+    await crawler.connect('session/' + session + '.session')
+
+    status, result = await crawler.join_channel(username)
+    await crawler.disconnect()
+
+    print(status)
+    print(result)
+
+    if status is 'ok':
+        return jsonify({'status': status, 'result': result.stringify()})
+    else:
+        return jsonify({'status': status, 'result': result})
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5833, host='0.0.0.0')

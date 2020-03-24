@@ -61,6 +61,29 @@ let self = (module.exports = {
     });
   },
 
+  joinToChannel: (session, username) => {
+    return new Promise((resolve, reject) => {
+      rp({
+        method: "POST",
+        uri: `${sails.config.params.tg_api_url}/channel/join`,
+        formData: {
+          session: session,
+          username: username
+        },
+        json: true
+      })
+        .then(res => {
+          if (res.status === "ok") {
+            return resolve(json);
+          }
+          return reject(res);
+        })
+        .catch(err => {
+          return reject({ result: err });
+        });
+    });
+  },
+
   sendCode: phone => {
     return new Promise((resolve, reject) => {
       rp({

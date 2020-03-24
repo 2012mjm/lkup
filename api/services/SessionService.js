@@ -25,6 +25,25 @@ let self = (module.exports = {
     });
   },
 
+  getNotUseJoinChannel: (channelUsername, memberCount) => {
+    return new Promise((resolve, reject) => {
+      const query =
+        "SELECT id FROM `session` `s` \
+          WHERE NOT EXISTS (SELECT * FROM `channel` `ch` \
+            WHERE ch.sessionId = s.id AND ch.channelUsername = ?) \
+            AND active = 1 AND blockJoinChannel = 0 \
+            ORDER BY id \
+            LIMIT ?";
+
+      Session.query(query, [channelUsername, memberCount], (err, rows) => {
+        if (err || rows.length === 0) {
+          return reject(sails.__("not found"));
+        }
+        resolve(rows);
+      });
+    });
+  },
+
   getList: (page = 1, limit = 10) => {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM `session` ORDER BY id DESC";
@@ -57,9 +76,7 @@ let self = (module.exports = {
         data => {
           const textList = data.rows.map(
             session =>
-              `#${session.id} - ${session.phone}\n${
-                session.gender === "male" ? "👨🏻" : "👩🏻"
-              } ${session.firstname} ${session.lastname}`
+              `#${session.id} - ${session.phone}\n${session.gender === "male" ? "👨🏻" : "👩🏻"} ${session.firstname} ${session.lastname}`
           );
 
           let options = {};
@@ -120,8 +137,7 @@ let self = (module.exports = {
             res => {
               if (res.status === "send_code") {
                 return resolve({
-                  message:
-                    "کد تایید برای شما ارسال شد\nکد را برای من ارسال کنید.",
+                  message: "کد تایید برای شما ارسال شد\nکد را برای من ارسال کنید.",
                   hash: res.result
                 });
               } else if (res.status === "already_login") {
@@ -196,6 +212,15 @@ let self = (module.exports = {
           return reject(`خطایی رخ داده است دوباره تلاش کنید!`);
         }
       );
+    });
+  },
+
+  update: (id, updateAttr) => {
+    return new Promise((resolve, reject) => {
+      Session.update({ id }, updateAttr).exec((err, updated) => {
+        if (err) return reject(err);
+        resolve(updated[0]);
+      });
     });
   }
 });

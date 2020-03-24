@@ -7,7 +7,7 @@ let self = (module.exports = {
     const persianNumbers = ["۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹", "۰"];
     const arabicNumbers = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "٠"];
 
-    for (const i = 0, numbersLen = persianNumbers.length; i < numbersLen; i++) {
+    for (let i = 0, numbersLen = persianNumbers.length; i < numbersLen; i++) {
       value = value.replace(
         new RegExp(persianNumbers[i], "g"),
         englishNumbers[i]
@@ -47,15 +47,11 @@ let self = (module.exports = {
     if (str.length >= 4) {
       str = str.replace(/(\d)(?=(\d{3})+)/g, "$1,");
     }
-    return `${persianJs(str)
-      .englishNumber()
-      .toString()} ${unit}`;
+    return `${persianJs(str).englishNumber().toString()} ${unit}`;
   },
 
   persianNum: value => {
-    return persianJs(value.toString())
-      .englishNumber()
-      .toString();
+    return persianJs(value.toString()).englishNumber().toString();
   },
 
   seperate3Digit: value => {
@@ -88,9 +84,9 @@ let self = (module.exports = {
 
   memberCountFix: value => {
     if (value >= 1000000) {
-      return Math.round((value / 1000000) * 10) / 10 + " میلیون";
+      return Math.round(value / 1000000 * 10) / 10 + " میلیون";
     } else if (value >= 1000) {
-      return Math.round((value / 1000) * 10) / 10 + " هزار";
+      return Math.round(value / 1000 * 10) / 10 + " هزار";
     } else if (value >= 100) {
       return Math.round(value / 100) * 100;
     } else if (value >= 10) {

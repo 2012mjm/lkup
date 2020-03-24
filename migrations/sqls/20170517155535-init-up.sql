@@ -97,9 +97,10 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `order` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `userId` INT NOT NULL,
-  `messageId` INT NOT NULL,
-  `countLike` INT NOT NULL DEFAULT 0,
-  `type` ENUM('join', 'coin') NOT NULL,
+  `messageId` INT NULL,
+  `channelUsername` VARCHAR(128) NULL,
+  `count` INT NOT NULL DEFAULT 0,
+  `type` ENUM('channel', 'like') NOT NULL,
   `paymentId` INT NULL,
   `status` ENUM('pending', 'working', 'done') NOT NULL DEFAULT 'pending',
   `createdAt` DATETIME NOT NULL,
@@ -194,6 +195,39 @@ INSERT INTO `setting` (`id`, `title`, `key`, `value`) VALUES
   (NULL, '۱ لایک تست درگاه پرداخت', 'price_like_1', '100'),
   (NULL, '۵۰۰ لایک رایگان مدیر', 'price_like_500', '0'),
   (NULL, '۱۰۰ لایک', 'price_like_100', '7500');
+
+-- -----------------------------------------------------
+-- Table `channel`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `channel` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `channelUsername` VARCHAR(128) NOT NULL,
+  `sessionId` INT NOT NULL,
+  `orderId` INT NULL,
+  `status` TINYINT(1) NULL DEFAULT 0,
+  `createdAt` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_like_session_user2_idx` (`userId` ASC),
+  INDEX `fk_like_session_session2_idx` (`sessionId` ASC),
+  INDEX `fk_like_session_like_order2_idx` (`orderId` ASC),
+  CONSTRAINT `fk_like_session_user2`
+    FOREIGN KEY (`userId`)
+    REFERENCES `user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_like_session_session2`
+    FOREIGN KEY (`sessionId`)
+    REFERENCES `session` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_like_session_like_order2`
+    FOREIGN KEY (`orderId`)
+    REFERENCES `order` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
 
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

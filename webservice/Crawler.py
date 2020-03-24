@@ -16,6 +16,7 @@ from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.upload import GetFileRequest
 from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
+from telethon.tl.functions.channels import JoinChannelRequest
 
 from telethon.errors import FloodWaitError, \
     SessionPasswordNeededError, \
@@ -30,7 +31,10 @@ from telethon.errors import FloodWaitError, \
     PhoneNumberBannedError, \
     PhoneNumberInvalidError, \
     ApiIdInvalidError, \
-    ApiIdPublishedFloodError
+    ApiIdPublishedFloodError, \
+    ChannelsTooMuchError, \
+    ChannelInvalidError, \
+    ChannelPrivateError
 
 
 from telethon.tl.types import InputChannel, \
@@ -381,3 +385,25 @@ class Crawler:
                         {'_': 'keyboardButtonBuy', 'text': button.text})
             rowList.append(buttonList)
         return json.dumps(rowList)
+
+    async def join_channel(self, username=None):
+        if self.client is None:
+            return 'client_none', None
+
+        if not await self.client.is_user_authorized():
+            return 'user not login'
+
+        try:
+            result = await self.client(JoinChannelRequest(
+                channel=username
+            ))
+            return 'ok', result
+        except ChannelsTooMuchError as err:
+            return 'ChannelsTooMuchError', 'You have joined too many channels/supergroups.',
+        except ChannelInvalidError as err:
+            return 'ChannelInvalidError', 'Invalid channel object. Make sure to pass the right types, for instance making sure that the request is designed for channels or otherwise look for a different one more suited.'
+        except ChannelPrivateError as err:
+            return 'ChannelPrivateError', 'The channel specified is private and you lack permission to access it. Another reason may be that you were banned from it.'
+        except Exception as err:
+            print(err)
+            return 'exception', None

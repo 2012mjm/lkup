@@ -1,5 +1,5 @@
 module.exports = {
-  tableName: "order",
+  tableName: "channel",
   autoCreatedAt: false,
   autoUpdatedAt: false,
   attributes: {
@@ -9,37 +9,27 @@ module.exports = {
       index: true,
       size: 11
     },
-    messageId: {
+    channelUsername: {
+      type: "string",
+      required: true,
+      size: 128
+    },
+    sessionId: {
       type: "integer",
-      required: false,
+      required: true,
       index: true,
       size: 11
     },
-    channelUsername: {
-      type: "string",
-      required: false,
-      size: 128
-    },
-    count: {
-      type: "integer",
-      required: false,
-      size: 11
-    },
-    type: {
-      type: "string",
-      required: true,
-      enum: ["channel", "like"]
-    },
-    paymentId: {
+    orderId: {
       type: "integer",
       required: false,
       index: true,
       size: 11
     },
     status: {
-      type: "string",
-      required: true,
-      enum: ["pending", "working", "done"]
+      type: "integer",
+      required: false,
+      size: 1
     },
     createdAt: {
       type: "datetime",

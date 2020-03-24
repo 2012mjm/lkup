@@ -1,5 +1,7 @@
 const Telegraf = require("telegraf");
 const SocksAgent = require("socks5-https-client/lib/Agent");
+
+const TextHelper = require("../../helper/TextHelper");
 // const session = require("telegraf/session");
 
 class BotService {
@@ -79,6 +81,10 @@ class BotService {
         reply(
           "شماره موبایل مورد نظر را برای من ارسال کنید\nبرای مثال: 989011231234"
         );
+      } else if (user.isAdmin && text === sails.__("Join to channel")) {
+        UserService.tgUpdateState(user, "join_to_channel", null);
+
+        reply(sails.__("Enter your channel id for me"));
       } else if (user.isAdmin && text === sails.__("Increase like")) {
         UserService.tgUpdateState(user, "start", null);
         // reply(
@@ -109,6 +115,42 @@ class BotService {
             reply(err);
           }
         );
+      } else if (
+        user.isAdmin && user.tgState === "join_to_channel" && text !== null
+      ) {
+        UserService.tgUpdateState(user, "join_to_channel_count", {
+          channel_id: text.trim()
+        });
+        reply(sails.__("Enter your member for join to channel"));
+      } else if (
+        user.isAdmin &&
+        user.tgState === "join_to_channel_count" &&
+        text !== null
+      ) {
+        const channelUsername = JSON.parse(user.tgStateParams).channel_id;
+        const count = TextHelper.fixDigit(text.trim());
+
+        OrderService.insertByUserId(user.id, {
+          channelUsername,
+          count,
+          type: "channel"
+        })
+          .then(order => {
+            reply(sails.__("Add order and waiting for join members"));
+
+            ChannelService.joinMember(order)
+              .then(() => {
+                reply(
+                  `${sails.__("Join member was done")}, @${order.channelUsername}`
+                );
+              })
+              .catch(err => {
+                reply(`${err}, @${order.channelUsername}`);
+              });
+          })
+          .catch(() => {
+            reply(sails.__("Problem, try again"));
+          });
       } else if (
         user.isAdmin && user.tgState === "send_code" && text !== null
       ) {
@@ -393,6 +435,11 @@ class BotService {
               },
               {
                 text: sails.__("Session list")
+              }
+            ],
+            [
+              {
+                text: sails.__("Join to channel")
               }
             ]
           ]
