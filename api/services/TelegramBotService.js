@@ -130,26 +130,22 @@ class BotService {
         const channelUsername = JSON.parse(user.tgStateParams).channel_id;
         const count = TextHelper.fixDigit(text.trim());
 
-        OrderService.insertByUserId(user.id, {
-          channelUsername,
-          count,
-          type: "channel"
-        })
+        OrderService.insertByUserIdForChannel(user.id, channelUsername, count)
           .then(order => {
             reply(sails.__("Add order and waiting for join members"));
 
             ChannelService.joinMember(order)
               .then(() => {
                 reply(
-                  `${sails.__("Join member was done")}, @${order.channelUsername}`
+                  `${sails.__("Join member was done")} @${order.channelUsername}`
                 );
               })
               .catch(err => {
-                reply(`${err}, @${order.channelUsername}`);
+                reply(`${err} @${order.channelUsername}`);
               });
           })
-          .catch(() => {
-            reply(sails.__("Problem, try again"));
+          .catch(err => {
+            reply(err);
           });
       } else if (
         user.isAdmin && user.tgState === "send_code" && text !== null

@@ -21,6 +21,26 @@ let self = (module.exports = {
     });
   },
 
+  insertByUserIdForChannel: (userId, channelUsername, count) => {
+    return new Promise((resolve, reject) => {
+      self
+        .findPendingByChannelUsername(channelUsername)
+        .then(() => {
+          reject(sails.__("Channel is lock"));
+        })
+        .catch(() => {
+          self
+            .insertByUserId(userId, {
+              channelUsername,
+              count,
+              type: "channel"
+            })
+            .then(resolve)
+            .catch(() => reject(sails.__("Problem, try again")));
+        });
+    });
+  },
+
   update: (id, updateAttr) => {
     return new Promise((resolve, reject) => {
       Order.update({ id: id }, updateAttr).exec((err, updated) => {
@@ -42,6 +62,15 @@ let self = (module.exports = {
   findByPaymentId: id => {
     return new Promise((resolve, reject) => {
       Order.findOne({ paymentId: id }, (err, model) => {
+        if (err || !model) return reject(sails.__("not found"));
+        return resolve(model);
+      });
+    });
+  },
+
+  findPendingByChannelUsername: channelUsername => {
+    return new Promise((resolve, reject) => {
+      Order.findOne({ channelUsername, status: "pending" }, (err, model) => {
         if (err || !model) return reject(sails.__("not found"));
         return resolve(model);
       });
