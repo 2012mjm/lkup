@@ -64,8 +64,9 @@ let self = (module.exports = {
               if (err.status === "ChannelsTooMuchError") {
                 SessionService.update(session.id, { blockJoinChannel: "1" });
               } else if (
-                err.status === "ChannelInvalidError" ||
-                err.status === "ChannelPrivateError"
+                i === 0 &&
+                (err.status === "ChannelInvalidError" ||
+                  err.status === "ChannelPrivateError")
               ) {
                 return reject(err.result);
               }
