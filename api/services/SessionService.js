@@ -32,7 +32,7 @@ let self = (module.exports = {
           WHERE NOT EXISTS (SELECT * FROM `channel` `ch` \
             WHERE ch.sessionId = s.id AND ch.channelUsername = ?) \
             AND active = 1 AND blockJoinChannel = 0 \
-            ORDER BY id \
+            ORDER BY RAND() \
             LIMIT ?";
 
       Session.query(query, [channelUsername, memberCount], (err, rows) => {
