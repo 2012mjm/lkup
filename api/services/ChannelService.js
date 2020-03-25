@@ -31,49 +31,58 @@ let self = (module.exports = {
 
   joinMember: order => {
     return new Promise((resolve, reject) => {
-      let c = 0;
-      SessionService.getNotUseJoinChannel(order.channelUsername, order.count)
-        .then(sessions => {
-          sessions.forEach(session => {
-            TelegramApiService.joinToChannel(
-              session.phone,
-              order.channelUsername
-            )
-              .then(res => {
-                c++;
-                self
-                  .insertByUserId(order.userId, {
-                    channelUsername: order.channelUsername,
-                    sessionId: session.id,
-                    orderId: order.id,
-                    status: true
-                  })
-                  .then();
-                if (c >= order.count) {
-                  OrderService.update(order.id, { status: "done" }).then();
-                  return resolve();
-                }
-              })
-              .catch(err => {
-                if (err.status === "ChannelsTooMuchError") {
-                  SessionService.update(session.id, { blockJoinChannel: "1" });
-                } else if (
-                  err.status === "ChannelInvalidError" ||
-                  err.status === "ChannelPrivateError"
-                ) {
-                  return reject(err.result);
-                }
+      let countDone = 0;
+      SessionService.getNotUseJoinChannel(
+        order.channelUsername,
+        order.count + 500
+      )
+        .then(async sessions => {
+          for (let i = 0; i < sessions.length; i++) {
+            const session = sessions[i];
 
-                self
-                  .insertByUserId(order.userId, {
-                    channelUsername: order.channelUsername,
-                    sessionId: session.id,
-                    orderId: order.id,
-                    status: false
-                  })
-                  .then();
-              });
-          });
+            if (countDone >= order.count) {
+              OrderService.update(order.id, { status: "done" }).then();
+              return resolve();
+            }
+
+            try {
+              await TelegramApiService.joinToChannel(
+                session.phone,
+                order.channelUsername
+              );
+
+              countDone++;
+              self
+                .insertByUserId(order.userId, {
+                  channelUsername: order.channelUsername,
+                  sessionId: session.id,
+                  orderId: order.id,
+                  status: true
+                })
+                .then();
+            } catch (err) {
+              if (err.status === "ChannelsTooMuchError") {
+                SessionService.update(session.id, { blockJoinChannel: "1" });
+              } else if (
+                err.status === "ChannelInvalidError" ||
+                err.status === "ChannelPrivateError"
+              ) {
+                return reject(err.result);
+              }
+
+              self
+                .insertByUserId(order.userId, {
+                  channelUsername: order.channelUsername,
+                  sessionId: session.id,
+                  orderId: order.id,
+                  status: false
+                })
+                .then();
+            }
+          }
+
+          OrderService.update(order.id, { status: "done" }).then();
+          return resolve();
         })
         .catch(() => reject(sails.__("Problem, try again")));
     });
