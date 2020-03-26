@@ -100,6 +100,15 @@ class BotService {
             reply(err.text);
           }
         );
+      } else if (user.isAdmin && text === sails.__("Order list")) {
+        OrderService.tgGetList().then(
+          res => {
+            reply(res.text, res.options);
+          },
+          err => {
+            reply(err.text);
+          }
+        );
       } else if (
         user.isAdmin && user.tgState === "add_new_number" && text !== null
       ) {
@@ -273,6 +282,18 @@ class BotService {
           editMessageText(res.text, res.options);
           answerCbQuery();
         });
+        return true;
+      }
+
+      const match = data.match(/^order_page_(\d+)$/i);
+      if (user.isAdmin && match) {
+        const page = parseInt(match[1]);
+
+        OrderService.tgGetList(page).then(res => {
+          editMessageText(res.text, res.options);
+          answerCbQuery();
+        });
+        return true;
       }
 
       // if (user.tgState === "get_message" && user.tgStateParams !== null) {
@@ -436,6 +457,9 @@ class BotService {
             [
               {
                 text: sails.__("Join to channel")
+              },
+              {
+                text: sails.__("Order list")
               }
             ]
           ]

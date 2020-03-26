@@ -92,5 +92,60 @@ let self = (module.exports = {
         resolve(rows);
       });
     });
+  },
+
+  getList: (page = 1, limit = 10) => {
+    return new Promise((resolve, reject) => {
+      const query = "SELECT * FROM `order` ORDER BY id DESC";
+
+      Order.query(
+        `${query} LIMIT ? OFFSET ?`,
+        [limit, (page - 1) * limit],
+        (err, rows) => {
+          if (err || rows.length === 0) {
+            return reject(sails.__("Order not found"));
+          }
+
+          Order.query(
+            `SELECT COUNT(*) AS count FROM (${query}) c`,
+            [],
+            (err, rowsCount) => {
+              if (err || rowsCount.length === 0)
+                return reject(sails.__("Order not found"));
+              resolve({ rows: rows, count: rowsCount[0].count });
+            }
+          );
+        }
+      );
+    });
+  },
+
+  tgGetList: (page = 1, limit = 10) => {
+    return new Promise((resolve, reject) => {
+      self.getList(page, limit).then(
+        data => {
+          const textList = data.rows.map(
+            order =>
+              `#${order.id} - @${order.channelUsername}\n${order.count} ممبر\n${order.status === "done" ? "انجام شد" : "در حال انجام"}`
+          );
+
+          let options = {};
+          const inlineKeyboard = TextHelper.paginationInlineKeyboard(
+            data.count,
+            limit,
+            "order_page_",
+            page
+          );
+          if (inlineKeyboard !== null) {
+            options.reply_markup = { inline_keyboard: inlineKeyboard };
+          }
+
+          return resolve({ text: textList.join("\n\n"), options: options });
+        },
+        err => {
+          return reject({ text: err });
+        }
+      );
+    });
   }
 });

@@ -61,7 +61,7 @@ let self = (module.exports = {
             [],
             (err, rowsCount) => {
               if (err || rowsCount.length === 0)
-                return reject(sails.__("Channel not found"));
+                return reject(sails.__("Session not found"));
               resolve({ rows: rows, count: rowsCount[0].count });
             }
           );
