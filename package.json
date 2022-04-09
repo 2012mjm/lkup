@@ -24,7 +24,7 @@
     "hashids": "^1.1.4",
     "include-all": "^1.0.0",
     "jalali-moment": "^2.1.3",
-    "moment": "^2.18.1",
+    "moment": "^2.29.2",
     "mute-stream": "latest",
     "mysql": "^2.13.0",
     "persianjs": "^0.3.0",
