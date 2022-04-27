@@ -9,7 +9,7 @@
     "db-migrate-mysql": "^1.1.10",
     "ejs": "2.3.4",
     "get-log": "latest",
-    "grunt": "1.0.1",
+    "grunt": "1.5.2",
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-coffee": "1.0.0",
     "grunt-contrib-concat": "1.0.1",
